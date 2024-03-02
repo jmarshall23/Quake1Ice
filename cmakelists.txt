@@ -2,66 +2,66 @@ cmake_minimum_required(VERSION 3.10)
 project(Quake)
 
 set(SOURCES
-    chase.c
-    cd_win.c
-    cl_demo.c
-    cl_input.c
-    cl_main.c
-    cl_parse.c
-    cl_tent.c
-    cmd.c
-    common.c
-    conproc.c
-    console.c
-    crc.c
-    cvar.c
-    gl_draw.c
-    gl_mesh.c
-    gl_model.c
-    gl_refrag.c
-    gl_rlight.c
-    gl_rmain.c
-    gl_rmisc.c
-    gl_rsurf.c
-    gl_screen.c
-    gl_test.c
-    gl_vidnt.c
-    gl_warp.c
-    host.c
-    host_cmd.c
-    in_win.c
-    keys.c
-    mathlib.c
-    menu.c
-    net_dgrm.c
-    net_loop.c
-    net_main.c
-    net_vcr.c
-    net_win.c
-    net_wins.c
-    pr_cmds.c
-    pr_edict.c
-    pr_exec.c
-    sbar.c
-    r_part.c
-    snd_dma.c
-    snd_mem.c
-    snd_mix.c
-    snd_win.c
-    sv_main.c
-    sv_move.c
-    sv_phys.c
-    sv_user.c
-    sys_win.c
-    view.c
-    wad.c
+    "chase.cpp"
+    "cd_win.cpp"
+    "cl_demo.cpp"
+    "cl_input.cpp"
+    "cl_main.cpp"
+    "cl_parse.cpp"
+    "cl_tent.cpp"
+    "cmd.cpp"
+    "common.cpp"
+    "conproc.cpp"
+    "console.cpp"
+    "crc.cpp"
+    "cvar.cpp"
+    "gl_draw.cpp"
+    "gl_mesh.cpp"
+    "gl_model.cpp"
+    "gl_refrag.cpp"
+    "gl_rlight.cpp"
+    "gl_rmain.cpp"
+    "gl_rmisc.cpp"
+    "gl_rsurf.cpp"
+    "gl_screen.cpp"
+    "gl_test.cpp"
+    "gl_vidnt.cpp"
+    "gl_warp.cpp"
+    "host.cpp"
+    "host_cmd.cpp"
+    "in_win.cpp"
+    "keys.cpp"
+    "mathlib.cpp"
+    "menu.cpp"
+    "net_dgrm.cpp"
+    "net_loop.cpp"
+    "net_main.cpp"
+    "net_vcr.cpp"
+    "net_win.cpp"
+    "net_wins.cpp"
+    "pr_cmds.cpp"
+    "pr_edict.cpp"
+    "pr_exec.cpp"
+    "sbar.cpp"
+    "r_part.cpp"
+    "snd_dma.cpp"
+    "snd_mem.cpp"
+    "snd_mix.cpp"
+    "snd_win.cpp"
+    "sv_main.cpp"
+    "sv_move.cpp"
+    "sv_phys.cpp"
+    "sv_user.cpp"
+    "sys_win.cpp"
+    "view.cpp"
+    "wad.cpp"
     winquake.rc
-    world.c
-    zone.c
+    "world.cpp"
+    "zone.cpp"
 )
 
 # Add executable target
-add_executable(Quake  WIN32 ${SOURCES})
+add_executable(Quake  WIN32 ${SOURCES} "game/game_main.cpp" "game/game.h")
 
 # Add GLQUAKE preprocessor definition
 target_compile_definitions(Quake PRIVATE GLQUAKE)
@@ -91,3 +91,7 @@ set_target_properties(Quake PROPERTIES
 set_target_properties(Quake PROPERTIES
     DEBUG_OUTPUT_NAME "Quake_dbg"
 )
+
+if(MSVC)
+    target_compile_options(Quake PRIVATE /wd4305 /wd4996)
+endif()

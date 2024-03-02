@@ -8,7 +8,7 @@
 #define IDD_PROGRESS                    109
 #define IDC_PROGRESS                    1000
 
-// Next default values for new objects
+// Next default values for _new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS

@@ -25,7 +25,7 @@ typedef unsigned int    u_int;
 typedef unsigned long   u_long;
 
 /*
- * The new type to be used in all
+ * The _new type to be used in all
  * instances which refer to sockets.
  */
 typedef u_int           SOCKET;
@@ -119,7 +119,7 @@ struct timeval {
 #define IOC_OUT         0x40000000      /* copy out parameters */
 #define IOC_IN          0x80000000      /* copy in parameters */
 #define IOC_INOUT       (IOC_IN|IOC_OUT)
-                                        /* 0x20000000 distinguishes new &
+                                        /* 0x20000000 distinguishes _new &
                                            old ioctl's */
 #define _IO(x,y)        (IOC_VOID|((x)<<8)|(y))
 

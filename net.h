@@ -271,7 +271,7 @@ void		NET_Init (void);
 void		NET_Shutdown (void);
 
 struct qsocket_s	*NET_CheckNewConnections (void);
-// returns a new connection number if there is one pending, else -1
+// returns a _new connection number if there is one pending, else -1
 
 struct qsocket_s	*NET_Connect (char *host);
 // called by client to connect to a host.  Returns -1 if not able to
@@ -314,7 +314,7 @@ typedef struct _PollProcedure
 {
 	struct _PollProcedure	*next;
 	double					nextTime;
-	void					(*procedure)();
+	void					(*procedure)(void *);
 	void					*arg;
 } PollProcedure;
 

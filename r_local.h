@@ -192,7 +192,7 @@ extern int			vstartscan;
 extern fixed16_t	sadjust, tadjust;
 extern fixed16_t	bbextents, bbextentt;
 
-#define MAXBVERTINDEXES	1000	// new clipped vertices when clipping bmodels
+#define MAXBVERTINDEXES	1000	// _new clipped vertices when clipping bmodels
 								//  to the world BSP
 extern mvertex_t	*r_ptverts, *r_ptvertsmax;
 
