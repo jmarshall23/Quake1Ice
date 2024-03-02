@@ -1,0 +1,93 @@
+cmake_minimum_required(VERSION 3.10)
+project(Quake)
+
+set(SOURCES
+    chase.c
+    cd_win.c
+    cl_demo.c
+    cl_input.c
+    cl_main.c
+    cl_parse.c
+    cl_tent.c
+    cmd.c
+    common.c
+    conproc.c
+    console.c
+    crc.c
+    cvar.c
+    gl_draw.c
+    gl_mesh.c
+    gl_model.c
+    gl_refrag.c
+    gl_rlight.c
+    gl_rmain.c
+    gl_rmisc.c
+    gl_rsurf.c
+    gl_screen.c
+    gl_test.c
+    gl_vidnt.c
+    gl_warp.c
+    host.c
+    host_cmd.c
+    in_win.c
+    keys.c
+    mathlib.c
+    menu.c
+    net_dgrm.c
+    net_loop.c
+    net_main.c
+    net_vcr.c
+    net_win.c
+    net_wins.c
+    pr_cmds.c
+    pr_edict.c
+    pr_exec.c
+    sbar.c
+    r_part.c
+    snd_dma.c
+    snd_mem.c
+    snd_mix.c
+    snd_win.c
+    sv_main.c
+    sv_move.c
+    sv_phys.c
+    sv_user.c
+    sys_win.c
+    view.c
+    wad.c
+    winquake.rc
+    world.c
+    zone.c
+)
+
+# Add executable target
+add_executable(Quake  WIN32 ${SOURCES})
+
+# Add GLQUAKE preprocessor definition
+target_compile_definitions(Quake PRIVATE GLQUAKE)
+
+# Link against the OpenGL library
+target_link_libraries(Quake PRIVATE opengl32 )
+
+# Link against Winsock library
+target_link_libraries(Quake PRIVATE Ws2_32)
+
+# Link against Windows Multimedia library
+target_link_libraries(Quake PRIVATE Winmm)
+
+# Link against Common Controls library
+target_link_libraries(Quake PRIVATE Comctl32)
+
+# Link against DirectInput library
+target_link_libraries(Quake PRIVATE dinput8)
+target_link_libraries(Quake PRIVATE dxguid)
+
+# Set the output directory for all build types (Debug, Release, etc.)
+set_target_properties(Quake PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../
+)
+
+# Conditionally add a suffix to the output name for Debug builds
+set_target_properties(Quake PROPERTIES
+    DEBUG_OUTPUT_NAME "Quake_dbg"
+)
