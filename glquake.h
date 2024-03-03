@@ -129,7 +129,7 @@ typedef struct
 
 
 typedef enum {
-	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2, pt_explode3, pt_smoke, pt_blood
+	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2, pt_explode3, pt_smoke, pt_blood, pt_smoketrail, pt_firetrail
 } ptype_t;
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
@@ -139,10 +139,12 @@ typedef struct particle_s
 	vec3_t		org;
 	float		color;
 	float		size;
+	float		growth;
 // drivers never touch the following fields
 	struct particle_s	*next;
 	vec3_t		vel;
 	float		ramp;
+	float		start;
 	float		die;
 	ptype_t		type;
 } particle_t;

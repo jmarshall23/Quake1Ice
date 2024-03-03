@@ -164,6 +164,8 @@ avelocities[0][i] = (rand()&255) * 0.01;
 		p->next = active_particles;
 		active_particles = p;
 
+		p->start = cl.time;
+
 		p->die = cl.time + 0.01;
 		p->color = 0x6f;
 		p->type = pt_explode;
@@ -229,7 +231,7 @@ void R_ReadPointFile_f (void)
 		free_particles = p->next;
 		p->next = active_particles;
 		active_particles = p;
-		
+		p->start = cl.time;
 		p->die = 99999;
 		p->color = (-c)&15;
 		p->type = pt_static;
@@ -289,6 +291,8 @@ void R_ParticleExplosion (const vec3_t & org)
 		p->next = active_particles;
 		active_particles = p;
 
+		p->start = cl.time;
+
 		// Adjust die time for more variation in particle lifespan
 		p->die = cl.time + (3 + (rand() % 5)); // Now varies from 3 to 7
 
@@ -300,6 +304,8 @@ void R_ParticleExplosion (const vec3_t & org)
 
 		// More variation in the ramp to affect particle appearance over time
 		p->ramp = rand() % 5; // Increased variability in appearance
+
+		p->growth = 1.0f + ((rand() % 401) / 100.0f); // Random growth between 1.0 and 5.0
 
 		if (i % 3 == 0) // Change condition to create three types of particles
 		{
@@ -351,7 +357,7 @@ void R_ParticleExplosion2 (const vec3_t & org, int colorStart, int colorLength)
 		free_particles = p->next;
 		p->next = active_particles;
 		active_particles = p;
-
+		p->start = cl.time;
 		p->die = cl.time + 0.3;
 		p->color = colorStart + (colorMod % colorLength);
 		colorMod++;
@@ -382,6 +388,7 @@ void R_BlobExplosion (const vec3_t & org)
 			return;
 		p = free_particles;
 		free_particles = p->next;
+		p->start = cl.time;
 		p->next = active_particles;
 		active_particles = p;
 
@@ -435,9 +442,12 @@ void R_RunParticleEffect (const vec3_t & org, const vec3_t & dir, int color, int
 		active_particles = p;
 
 		// Adjust the die time and color for more subtle effects
+		p->start = cl.time;
 		p->die = cl.time + 0.2 + (rand() % 50) / 100.0; // Lasts between 0.2 to 0.7 seconds
 		p->color = (color & ~7) + (rand() & 7); // Slight variation in color
 		p->ramp = (rand() & 3) + 2;
+		p->growth = 1.0f + ((rand() % 401) / 100.0f); // Random growth between 1.0 and 5.0
+		p->size = 0.5f + ((rand() % 101) / 100.0f); // Random size between 0.5 and 1.5
 
 		// Blood
 		if (color == 73) { 
@@ -513,6 +523,7 @@ void R_LavaSplash (const vec3_t & org)
 				p->next = active_particles;
 				active_particles = p;
 		
+				p->start = cl.time;
 				p->die = cl.time + 2 + (rand()&31) * 0.02;
 				p->color = 224 + (rand()&7);
 				p->type = pt_slowgrav;
@@ -555,6 +566,7 @@ void R_TeleportSplash (const vec3_t & org)
 				p->next = active_particles;
 				active_particles = p;
 		
+				p->start = cl.time;
 				p->die = cl.time + 0.2 + (rand()&7) * 0.02;
 				p->color = 7 + (rand()&7);
 				p->type = pt_slowgrav;
@@ -573,107 +585,187 @@ void R_TeleportSplash (const vec3_t & org)
 			}
 }
 
-void R_RocketTrail (vec3_t &start, const vec3_t & end, int type)
-{
-	vec3_t		vec;
-	float		len;
-	int			j;
-	particle_t	*p;
-	int			dec;
-	static int	tracercount;
+void R_RocketTrail(vec3_t& start, const vec3_t& end, int type) {
+	vec3_t vec, right, up;
+	float len;
+	int j;
+	particle_t* p;
+	int dec;
+	static int tracercount;
 
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-	if (type < 128)
-		dec = 3;
-	else
-	{
+	VectorSubtract(end, start, vec);
+	len = VectorNormalize(vec);
+	// Generate "right" and "up" vectors to create a cone around "vec"
+	PerpendicularVector(right, vec); // Generate a vector perpendicular to "vec"
+	CrossProduct(vec, right, up); // Cross product to get "up" vector, perpendicular to both "vec" and "right"
+	float particleDensity = 0.5;
+
+	if (type < 128) {
+		dec = 1;
+	}
+	else {
 		dec = 1;
 		type -= 128;
 	}
 
-	while (len > 0)
-	{
-		len -= dec;
+	while (len > 0) {
+		len -= dec * particleDensity;
 
-		if (!free_particles)
-			return;
+		if (!free_particles) return;
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
 		active_particles = p;
-		
-		VectorCopy (vec3_origin, p->vel);
-		p->die = cl.time + 2;
 
-		switch (type)
-		{
-			case 0:	// rocket trail
-				p->ramp = (rand()&3);
+		//VectorClear(p->vel);
+		p->start = cl.time;
+		p->vel = vec3_t(0, 0, 0);
+		p->die = cl.time + (type == 0 ? 2.5 : 2);
+		p->growth = 5.0f + ((rand() % 501) / 100.0f); // Random growth between 5.0 and 10.0
+
+		float coneSpread = 0.1; // Adjust for wider or narrower cone
+		vec3_t randomDir;
+		switch (type) {
+			case 0: // Enhanced rocket trail with cone effect
+			{
+				float zSpreadMultiplier = 3.5; // Increase spread on the z-axis
+
+				// Assume vec is normalized direction from start to end
+				vec3_t inverseDir;
+				VectorSubtract(start, end, inverseDir); // Get the inverse direction vector
+				VectorNormalize(inverseDir); // Normalize it
+
+				vec3_t right, up;
+				// Generate perpendicular vectors "right" and "up" based on the inverse direction
+				PerpendicularVector(right, inverseDir);
+				CrossProduct(inverseDir, right, up);
+				VectorNormalize(up); // Ensure up vector is normalized
+
+				float coneSpread = 0.3; // Increase for a wider cone effect
+
+				p->ramp = (rand() & 3);
 				p->color = ramp3[(int)p->ramp];
-				p->type = pt_fire;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
-				break;
+				p->type = pt_firetrail;
+				p->size = 0.5f + ((rand() % 101) / 100.0f); // Random size between 0.5 and 1.5
 
-			case 1:	// smoke smoke
-				p->ramp = (rand()&3) + 2;
-				p->color = ramp3[(int)p->ramp];
-				p->type = pt_fire;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
-				break;
+				// Apply a bigger cone effect facing the inverse direction
+				for (j = 0; j < 3; j++) {
+					// Calculate randomDir within the cone spread in the inverse direction
+					if (j != 2) { // x and y components
+						randomDir[j] = inverseDir[j] + right[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread);
+					}
+					else { // z component with increased spread
+						randomDir[j] = inverseDir[j] + ((rand() % 201 - 100) / 1000.0f * coneSpread * zSpreadMultiplier) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread * zSpreadMultiplier);
+					}
+				}
+				VectorNormalize(randomDir); // Ensure the direction vector is normalized
 
-			case 2:	// blood
+				for (j = 0; j < 3; j++) {
+					p->org[j] = start[j] + randomDir[j] * ((rand() % 6) - 3);
+					p->vel[j] = randomDir[j] * 50; // Increase velocity for a more dramatic effect
+				}
+			}
+			break;
+
+			case 1: // Smoke with cone effect
+			{
+				p->die = cl.time + 4 + (rand() % 7);
+				p->ramp = (rand() & 3) + 2;
+				p->color = (p->ramp == 4) ? 0 : ramp3[(int)p->ramp];
+				p->type = pt_smoketrail;
+				p->size = 0.5f + ((rand() % 101) / 100.0f); // Random size between 0.5 and 1.5
+
+				float coneSpread = 0.5; // Existing coneSpread for x and y directions
+				float zSpreadMultiplier = 1.5; // Increase spread on the z-axis
+
+				// Apply cone effect for smoke with more z-axis spread
+				for (j = 0; j < 3; j++) {
+					if (j != 2) { // x and y components
+						randomDir[j] = vec[j] + right[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread);
+					}
+					else { // z component with increased spread
+						randomDir[j] = vec[j] + ((rand() % 201 - 100) / 1000.0f * coneSpread * zSpreadMultiplier) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread * zSpreadMultiplier);
+					}
+				}
+				VectorNormalize(randomDir);
+
+				for (j = 0; j < 3; j++) {
+					p->org[j] = start[j] + randomDir[j] * ((rand() % 8) - 4);
+					// Apply slightly more velocity in the z-axis to match the increased spread
+					if (j != 2) { // x and y components
+						p->vel[j] = randomDir[j] * 60; // Existing velocity adjusted for smoke
+					}
+					else { // z component with slightly more velocity
+						p->vel[j] = randomDir[j] * 60 * zSpreadMultiplier; // Match the spread with increased velocity
+					}
+				}
+			}
+			break;
+
+			case 2: // Blood with cone effect
 				p->type = pt_grav;
-				p->color = 67 + (rand()&3);
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
+				p->color = 67 + (rand() & 3);
+				// Apply cone effect for blood
+				for (j = 0; j < 3; j++) {
+					randomDir[j] = vec[j] + right[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread);
+				}
+				VectorNormalize(randomDir);
+				for (j = 0; j < 3; j++) {
+					p->org[j] = start[j] + randomDir[j] * ((rand() % 6) - 3);
+				}
 				break;
-
-			case 3:
-			case 5:	// tracer
+			case 3: // Tracer 1 with cone effect
+			case 5: // Tracer 2 with cone effect
 				p->die = cl.time + 0.5;
 				p->type = pt_static;
-				if (type == 3)
-					p->color = 52 + ((tracercount&4)<<1);
-				else
-					p->color = 230 + ((tracercount&4)<<1);
-			
+				p->color = (type == 3) ? 52 + ((tracercount & 4) << 1) : 230 + ((tracercount & 4) << 1);
+
 				tracercount++;
 
-				VectorCopy (start, p->org);
-				if (tracercount & 1)
-				{
-					p->vel[0] = 30*vec[1];
-					p->vel[1] = 30*-vec[0];
+				// Apply cone effect for tracer
+				for (j = 0; j < 3; j++) {
+					randomDir[j] = vec[j] + right[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread);
 				}
-				else
-				{
-					p->vel[0] = 30*-vec[1];
-					p->vel[1] = 30*vec[0];
+				VectorNormalize(randomDir);
+				// Tracers have a more straightforward path, so the cone effect is subtly applied
+				VectorCopy(start, p->org);
+				for (j = 0; j < 3; j++) {
+					p->vel[j] = randomDir[j] * 30; // Adjusted velocity for tracers
 				}
 				break;
 
-			case 4:	// slight blood
+			case 4: // Slight blood with cone effect
 				p->type = pt_grav;
-				p->color = 67 + (rand()&3);
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
-				len -= 3;
+				p->color = 67 + (rand() & 3);
+				// Apply cone effect for slight blood
+				for (j = 0; j < 3; j++) {
+					randomDir[j] = vec[j] + right[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread);
+				}
+				VectorNormalize(randomDir);
+				for (j = 0; j < 3; j++) {
+					p->org[j] = start[j] + randomDir[j] * ((rand() % 6) - 3);
+				}
+				len -= 3; // Decrement len for slight blood, ensure particles spread out
 				break;
 
-			case 6:	// voor trail
-				p->color = 9*16 + 8 + (rand()&3);
+			case 6: // Voor trail with cone effect
+				p->color = 9 * 16 + 8 + (rand() & 3);
 				p->type = pt_static;
-				p->die = cl.time + 0.3;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&15)-8);
+				p->die = cl.time + 0.5; // Adjusted lifespan for more visible trail
+
+				// Apply cone effect for Voor trail
+				for (j = 0; j < 3; j++) {
+					randomDir[j] = vec[j] + right[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread) + up[j] * ((rand() % 201 - 100) / 1000.0f * coneSpread);
+				}
+				VectorNormalize(randomDir);
+				for (j = 0; j < 3; j++) {
+					p->org[j] = start[j] + randomDir[j] * ((rand() & 15) - 8); // Enhanced spread for the Voor trail
+					p->vel[j] = randomDir[j] * 10; // Adjusted velocity for the effect
+				}
 				break;
 		}
-		
 
-		VectorAdd (start, vec, start);
+		VectorAdd(start, vec, start); // Move start along the vector for the next particle
 	}
 }
 
@@ -702,6 +794,7 @@ void R_DrawParticles (void)
     GL_Bind(particletexture);
 	glEnable (GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBegin (GL_TRIANGLES);
 
 	VectorScale (vup, 1.5, up);
@@ -733,6 +826,9 @@ void R_DrawParticles (void)
 		break;
 	}
 
+
+	
+
 	for (p=active_particles ; p ; p=p->next)
 	{
 		for ( ;; )
@@ -749,35 +845,35 @@ void R_DrawParticles (void)
 		}
 
 #ifdef GLQUAKE
-		// Calculate the distance of the particle from the viewpoint
-		float distance = (p->org[0] - r_origin[0]) * vpn[0] +
-			(p->org[1] - r_origin[1]) * vpn[1] +
-			(p->org[2] - r_origin[2]) * vpn[2];
+		// Update particle size based on its growth rate and frametime
+		p->size += p->growth * frametime;
 
-		// Apply a base scale factor based on the particle size if specified
-		if (p->size > 0) {
-			distance *= p->size;
-		}
+		scale = p->size;
 
-		// Adjust the scale dynamically based on the calculated distance
-		if (distance < 20) {
-			// For very close particles, set a minimum scale to ensure visibility
-			scale = 1.0f;
-		}
-		else {
-			// Apply a scaling factor that increases with distance but at a rate that ensures particles remain visible
-			// Adjust the 0.004 factor if needed to fine-tune visibility at various distances
-			scale = 1 + (distance - 20) * 0.004;
-		}
+		// Ensure the particle size is within reasonable limits, if necessary
+		// This is optional and depends on the desired effect
+		if (p->size < 1.0f) p->size = 1.0f; // Minimum size
+		//if (p->size > 10.0f) p->size = 10.0f; // Maximum size, adjust as needed
 
-		// Ensure scale does not become too large, potentially causing particles to appear too big
-		// You can adjust the max scale value as needed
-		const float maxScale = 2.0f;
-		if (scale > maxScale) {
-			scale = maxScale;
-		}
+		//glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
+		// Convert d_8to24table color from 0-255 range to 0-1 range for OpenGL
+		unsigned int color = d_8to24table[(int)p->color];
+		float b = ((color >> 16) & 0xFF) / 255.0f;
+		float g = ((color >> 8) & 0xFF) / 255.0f;
+		float r = (color & 0xFF) / 255.0f;
 
-		glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
+		// Calculate remaining life as a percentage
+		float lifePercentage = 0.7f - ((float)(cl.time - p->start) / (float)(p->die - p->start));
+
+		// Ensure it doesn't exceed 1.0 or go below 0.0
+		lifePercentage =(lifePercentage > 1.0f) ? 1.0f : ((lifePercentage < 0.0f) ? 0.0f : lifePercentage);
+
+		// Fade out alpha based on remaining life
+		float alpha = lifePercentage;
+
+		// Set the color with alpha
+		glColor4f(r, g, b, alpha);
+
 		glTexCoord2f (0,0);
 		glVertex3fv (p->org);
 		glTexCoord2f (1,0);
@@ -806,23 +902,23 @@ void R_DrawParticles (void)
 
 		case pt_explode:
 			p->ramp += time2;
-			if (p->ramp >=8)
+			if (p->ramp >= 8)
 				p->die = -1;
 			else
 				p->color = ramp1[(int)p->ramp];
-			for (i=0 ; i<3 ; i++)
-				p->vel[i] += p->vel[i]*dvel;
+			for (i = 0; i < 3; i++)
+				p->vel[i] += p->vel[i] * dvel;
 			p->vel[2] -= grav;
 			break;
 
 		case pt_explode2:
 			p->ramp += time3;
-			if (p->ramp >=8)
+			if (p->ramp >= 8)
 				p->die = -1;
 			else
 				p->color = ramp2[(int)p->ramp];
-			for (i=0 ; i<3 ; i++)
-				p->vel[i] -= p->vel[i]*frametime;
+			for (i = 0; i < 3; i++)
+				p->vel[i] -= p->vel[i] * frametime;
 			p->vel[2] -= grav;
 			break;
 
@@ -854,27 +950,31 @@ void R_DrawParticles (void)
 			break;
 
 		case pt_blob:
-			for (i=0 ; i<3 ; i++)
-				p->vel[i] += p->vel[i]*dvel;
+			for (i = 0; i < 3; i++)
+				p->vel[i] += p->vel[i] * dvel;
 			p->vel[2] -= grav;
 			break;
 
 		case pt_blob2:
-			for (i=0 ; i<2 ; i++)
-				p->vel[i] -= p->vel[i]*dvel;
+			for (i = 0; i < 2; i++)
+				p->vel[i] -= p->vel[i] * dvel;
 			p->vel[2] -= grav;
 			break;
 
+		case pt_firetrail:
+			p->color = ramp3[(int)p->ramp];
+		case pt_smoketrail:
 		case pt_blood: // Handling blood particle behavior
-			p->ramp += time1; // Use a different time variable for gradual changes
-			if (p->ramp >= 5) // Shorter lifespan for blood particles
-				p->die = -1;
+			{
+				p->ramp += time1; // Use a different time variable for gradual changes
+				if (p->ramp >= 5) // Shorter lifespan for blood particles
+					p->die = -1;
 
-			for (i = 0; i < 3; i++) {
-				float randomFactor = 0.8 + ((rand() % 401) / 1000.0); // Generates a random value between 0.8 and 1.2
-				p->vel[i] *= randomFactor; // Apply a random damping effect to slow down or slightly speed up over time
+				for (i = 0; i < 3; i++) {
+					float randomFactor = 0.8 + ((rand() % 401) / 1000.0); // Generates a random value between 0.8 and 1.2
+					p->vel[i] *= randomFactor; // Apply a random damping effect to slow down or slightly speed up over time
+				}
 			}
-
 			break;
 
 		case pt_grav:

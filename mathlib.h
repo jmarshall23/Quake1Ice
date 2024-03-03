@@ -144,6 +144,7 @@ void _VectorSubtract(const vec3_t& veca, const vec3_t& vecb, vec3_t& out);
 void _VectorAdd (const vec3_t & veca, const vec3_t & vecb, vec3_t & out);
 void _VectorCopy (const vec3_t & in, vec3_t &out);
 
+void PerpendicularVector(vec3_t& dst, const vec3_t& src);
 int VectorCompare (const vec3_t & v1, const vec3_t & v2);
 vec_t Length (float *v);
 void CrossProduct (const vec3_t & v1, const vec3_t & v2, vec3_t & cross);
