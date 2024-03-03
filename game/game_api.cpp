@@ -4,8 +4,11 @@
 #include "../quakedef.h"
 #include "game_local.h"
 
+extern	cvar_t	sv_aim;
+
 namespace QuakeAPI
 {
+
 	void SetMinMaxSize(edict_t* e, const vec3_t& min, const vec3_t& max, qboolean rotate)
 	{
 		float* angles;
@@ -457,5 +460,428 @@ namespace QuakeAPI
 		ED_Free(ed);
 	}
 
+	edict_t* Find(edict_t* start, int field, const char* match) {
+		int e = NUM_FOR_EDICT(start) + 1;
+		for (; e < sv.num_edicts; e++) {
+			edict_t* ed = EDICT_NUM(e);
+			if (ed->free) continue;
+			char* t = E_STRING(ed, field);
+			if (!t) continue;
+			if (!strcmp(t, match)) {
+				return ed;
+			}
+		}
+		return sv.edicts; // return world if not found
+	}
 
+
+	void CheckEmptyString(const char* s) {
+		if (s[0] <= ' ') {
+			PR_RunError("Bad string");
+		}
+	}
+
+	int precache_file(const char* filename) {
+		// In a real implementation, you would cache the file here.
+		// For this stub, just pretend we did.
+		return 0; // Assuming 0 is the index of the filename in the precache list
+	}
+
+	int precache_sound(const char* soundname) {
+		CheckEmptyString(soundname);
+		if (sv.state != ss_loading) {
+			PR_RunError("PF_Precache_*: Precache can only be done in spawn functions");
+		}
+		for (int i = 0; i < MAX_SOUNDS; i++) {
+			if (!sv.sound_precache[i]) {
+				sv.sound_precache[i] = (char *)soundname;
+				return i;
+			}
+			if (!strcmp(sv.sound_precache[i], soundname)) {
+				return i;
+			}
+		}
+		PR_RunError("PF_precache_sound: overflow");
+		return 0; // To satisfy compiler, actual execution should never reach here.
+	}
+
+	int precache_model(const char* modelname) {
+		CheckEmptyString(modelname);
+		if (sv.state != ss_loading) {
+			PR_RunError("PF_Precache_*: Precache can only be done in spawn functions");
+		}
+		for (int i = 0; i < MAX_MODELS; i++) {
+			if (!sv.model_precache[i]) {
+				sv.model_precache[i] = (char *)modelname;
+				sv.models[i] = Mod_ForName((char*)modelname, true);
+				return i;
+			}
+			if (!strcmp(sv.model_precache[i], modelname)) {
+				return i;
+			}
+		}
+		PR_RunError("PF_precache_model: overflow");
+		return 0; // To satisfy compiler, actual execution should never reach here.
+	}
+
+	void coredump()
+	{
+		ED_PrintEdicts();
+	}
+
+	void traceon()
+	{
+		pr_trace = true;
+	}
+
+	void traceoff()
+	{
+		pr_trace = false;
+	}
+
+	void eprint(edict_t* e0)
+	{
+		//ED_PrintNum(EDICT_NUM(e0));
+	}
+
+	float walkmove(float yaw, float dist)
+	{
+		edict_t* ent;
+		vec3_t move;
+		dfunction_t* oldf;
+		int oldself;
+
+		ent = PROG_TO_EDICT(pr_global_struct->self);
+		yaw = yaw * M_PI * 2 / 360;
+
+		move[0] = cos(yaw) * dist;
+		move[1] = sin(yaw) * dist;
+		move[2] = 0;
+
+		// save program state, because SV_movestep may call other progs
+		oldf = pr_xfunction;
+		oldself = pr_global_struct->self;
+
+		float result = SV_movestep(ent, move, true);
+
+		// restore program state
+		pr_xfunction = oldf;
+		pr_global_struct->self = oldself;
+
+		return result;
+	}
+
+	int droptofloor()
+	{
+		edict_t* ent;
+		vec3_t end;
+		trace_t trace;
+
+		ent = PROG_TO_EDICT(pr_global_struct->self);
+
+		VectorCopy(ent->v.origin, end);
+		end[2] -= 256;
+
+		trace = SV_Move(ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
+
+		if (trace.fraction == 1 || trace.allsolid)
+			return 0;
+		else
+		{
+			VectorCopy(trace.endpos, ent->v.origin);
+			SV_LinkEdict(ent, false);
+			ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
+			ent->v.groundentity = EDICT_TO_PROG(trace.ent);
+			return 1;
+		}
+	}
+
+	void lightstyle(float style, const char* s0)
+	{
+		int j;
+		client_t* client;
+
+		// change the string in sv
+		sv.lightstyles[(int)style] = (char *)s0;
+
+		// send message to all clients on this server
+		if (sv.state != ss_active)
+			return;
+
+		for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
+			if (client->active || client->spawned)
+			{
+				MSG_WriteChar(&client->message, svc_lightstyle);
+				MSG_WriteChar(&client->message, style);
+				MSG_WriteString(&client->message, (char*)s0);
+			}
+	}
+
+	int rint(float f0)
+	{
+		if (f0 > 0)
+			return (int)(f0 + 0.5);
+		else
+			return (int)(f0 - 0.5);
+	}
+
+	void floor(float f0)
+	{
+		return floor(f0);
+	}
+
+	void ceil(float f0)
+	{
+		return ceil(f0);
+	}
+
+	int checkbottom(edict_t* e0)
+	{
+		return SV_CheckBottom(e0);
+	}
+
+	int pointcontents(vec3_t p0)
+	{
+		return SV_PointContents(p0);
+	}
+
+	edict_t* nextent(edict_t* e0)
+	{
+		int i;
+		edict_t* ent;
+
+		i = NUM_FOR_EDICT(e0);
+		while (1)
+		{
+			i++;
+			if (i == sv.num_edicts)
+			{
+				return sv.edicts; // Equivalent to RETURN_EDICT(sv.edicts);
+			}
+			ent = EDICT_NUM(i);
+			if (!ent->free)
+			{
+				return ent; // Equivalent to RETURN_EDICT(ent);
+			}
+		}
+	}
+
+	vec3_t aim(edict_t* ent, float speed)
+	{
+		vec3_t start, dir, end, bestdir;
+		edict_t* check, * bestent = nullptr;
+		trace_t tr;
+		float dist, bestdist = sv_aim.value;
+		int i;
+
+		VectorCopy(ent->v.origin, start);
+		start[2] += 20;
+
+		// try sending a trace straight
+		VectorCopy(pr_global_struct->v_forward, dir);
+		VectorMA(start, 2048, dir, end);
+		tr = SV_Move(start, vec3_origin, vec3_origin, end, false, ent);
+		if (tr.ent && tr.ent->v.takedamage == DAMAGE_AIM && (!teamplay.value || ent->v.team <= 0 || ent->v.team != tr.ent->v.team)) {
+			VectorCopy(pr_global_struct->v_forward, dir);
+			return dir;
+		}
+
+		// try all possible entities
+		VectorCopy(dir, bestdir);
+		bestent = nullptr;
+
+		for (i = 1; i < sv.num_edicts; i++) {
+			check = EDICT_NUM(i);
+			if (check->v.takedamage != DAMAGE_AIM || check == ent || (teamplay.value && ent->v.team > 0 && ent->v.team == check->v.team))
+				continue;
+
+			vec3_t checkPos;
+			for (int j = 0; j < 3; j++)
+				checkPos[j] = check->v.origin[j] + 0.5 * (check->v.mins[j] + check->v.maxs[j]);
+
+			VectorSubtract(checkPos, start, dir);
+			VectorNormalize(dir);
+			dist = DotProduct(dir, pr_global_struct->v_forward);
+
+			if (dist < bestdist)
+				continue; // too far to turn
+
+			tr = SV_Move(start, vec3_origin, vec3_origin, checkPos, false, ent);
+			if (tr.ent == check) {
+				// can shoot at this one
+				bestdist = dist;
+				bestent = check;
+			}
+		}
+
+		if (bestent) {
+			VectorSubtract(bestent->v.origin, ent->v.origin, dir);
+			dist = DotProduct(dir, pr_global_struct->v_forward);
+			VectorScale(pr_global_struct->v_forward, dist, end);
+			end[2] = dir[2];
+			VectorNormalize(end);
+			return end;
+		}
+		else {
+			return bestdir;
+		}
+	}
+
+	void changeyaw(void)
+	{
+		edict_t* ent;
+		float		ideal, current, move, speed;
+
+		ent = PROG_TO_EDICT(pr_global_struct->self);
+		current = anglemod(ent->v.angles[1]);
+		ideal = ent->v.ideal_yaw;
+		speed = ent->v.yaw_speed;
+
+		if (current == ideal)
+			return;
+		move = ideal - current;
+		if (ideal > current)
+		{
+			if (move >= 180)
+				move = move - 360;
+		}
+		else
+		{
+			if (move <= -180)
+				move = move + 360;
+		}
+		if (move > 0)
+		{
+			if (move > speed)
+				move = speed;
+		}
+		else
+		{
+			if (move < -speed)
+				move = -speed;
+		}
+
+		ent->v.angles[1] = anglemod(current + move);
+	}
+
+	sizebuf_t* WriteDest(float dest)
+	{
+		int entnum;
+		edict_t* ent;
+
+
+		#define	MSG_BROADCAST	0		// unreliable to all
+		#define	MSG_ONE			1		// reliable to one (msg_entity)
+		#define	MSG_ALL			2		// reliable to all
+		#define	MSG_INIT		3		// write to the init string
+
+
+
+		switch (static_cast<int>(dest))
+		{
+		case MSG_BROADCAST:
+			return &sv.datagram;
+
+		case MSG_ONE:
+			ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+			entnum = NUM_FOR_EDICT(ent);
+			if (entnum < 1 || entnum > svs.maxclients)
+				PR_RunError("WriteDest: not a client");
+			return &svs.clients[entnum - 1].message;
+
+		case MSG_ALL:
+			return &sv.reliable_datagram;
+
+		case MSG_INIT:
+			return &sv.signon;
+
+		default:
+			PR_RunError("WriteDest: bad destination");
+			break;
+		}
+
+		return nullptr;
+	}
+
+	void WriteByte(float dest, float value)
+	{
+		MSG_WriteByte(WriteDest(dest), static_cast<int>(value));
+	}
+
+	void WriteChar(float dest, float value)
+	{
+		MSG_WriteChar(WriteDest(dest), static_cast<int>(value));
+	}
+
+	void WriteShort(float dest, float value)
+	{
+		MSG_WriteShort(WriteDest(dest), static_cast<int>(value));
+	}
+
+	void WriteLong(float dest, float value)
+	{
+		MSG_WriteLong(WriteDest(dest), static_cast<int>(value));
+	}
+
+	void WriteAngle(float dest, float value)
+	{
+		MSG_WriteAngle(WriteDest(dest), value);
+	}
+
+	void WriteCoord(float dest, float value)
+	{
+		MSG_WriteCoord(WriteDest(dest), value);
+	}
+
+	void WriteString(float dest, const char* s0)
+	{
+		MSG_WriteString(WriteDest(dest), (char *)s0);
+	}
+
+	void WriteEntity(float dest, edict_t* e0)
+	{
+		MSG_WriteShort(WriteDest(dest), NUM_FOR_EDICT(e0));
+	}
+
+	void makestatic(edict_t* ent)
+	{
+		MSG_WriteByte(&sv.signon, svc_spawnstatic);
+
+		MSG_WriteByte(&sv.signon, SV_ModelIndex(pr_strings + ent->v.model));
+
+		MSG_WriteByte(&sv.signon, ent->v.frame);
+		MSG_WriteByte(&sv.signon, ent->v.colormap);
+		MSG_WriteByte(&sv.signon, ent->v.skin);
+		for (int i = 0; i < 3; i++)
+		{
+			MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
+			MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+		}
+
+		// throw the entity away now
+		ED_Free(ent);
+	}
+
+	void setspawnparms(edict_t* ent)
+	{
+		int i = NUM_FOR_EDICT(ent);
+		if (i < 1 || i > svs.maxclients)
+			PR_RunError("Entity is not a client");
+
+		// copy spawn parms out of the client_t
+		client_t* client = &svs.clients[i - 1];
+
+		for (i = 0; i < NUM_SPAWN_PARMS; i++)
+			(&pr_global_struct->parm1)[i] = client->spawn_parms[i];
+	}
+
+	void changelevel(const char* levelName)
+	{
+		if (svs.changelevel_issued)
+			return;
+
+		svs.changelevel_issued = true;
+
+		Cbuf_AddText(va("changelevel %s\n", levelName));
+	}
 }
