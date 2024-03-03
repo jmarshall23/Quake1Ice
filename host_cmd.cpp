@@ -1912,7 +1912,7 @@ void Host_InitCommands (void)
 	Cmd_AddCommand ("save", Host_Savegame_f);
 	Cmd_AddCommand ("give", Host_Give_f);
 
-	Cmd_AddCommand ("startdemos2", Host_Startdemos_f);
+	Cmd_AddCommand ("startdemos", Host_Startdemos_f);
 	Cmd_AddCommand ("demos", Host_Demos_f);
 	Cmd_AddCommand ("stopdemo", Host_Stopdemo_f);
 

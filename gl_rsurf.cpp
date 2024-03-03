@@ -32,7 +32,7 @@ int		lightmap_bytes;		// 1, 2, or 4
 
 int		lightmap_textures;
 
-unsigned		blocklights[18*18];
+float		blocklights[18*18];
 
 #define	BLOCK_WIDTH		128
 #define	BLOCK_HEIGHT	128
@@ -121,7 +121,7 @@ void R_AddDynamicLights (msurface_t *surf)
 				else
 					dist = td + (sd>>1);
 				if (dist < minlight)
-					blocklights[t*smax + s] += (rad - dist)*256;
+					blocklights[t*smax + s] += (rad - dist);
 			}
 		}
 	}
@@ -138,13 +138,13 @@ Combine and scale multiple lightmaps into the 8.8 format in blocklights
 void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 {
 	int			smax, tmax;
-	int			t;
+	float		t;
 	int			i, j, size;
 	byte		*lightmap;
-	unsigned	scale;
+	float		scale;
 	int			maps;
 	int			lightadj[4];
-	unsigned	*bl;
+	float		*bl;
 
 	surf->cached_dlight = (surf->dlightframe == r_framecount);
 
@@ -157,7 +157,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	if (r_fullbright.value || !cl.worldmodel->lightdata)
 	{
 		for (i=0 ; i<size ; i++)
-			blocklights[i] = 255*256;
+			blocklights[i] = 1.0f;
 		goto store;
 	}
 
@@ -167,13 +167,17 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 
 // add all the lightmaps
 	if (lightmap)
-		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
-			 maps++)
+		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255;
+			maps++)
 		{
-			scale = d_lightstylevalue[surf->styles[maps]];
+			scale = d_lightstylevalue[surf->styles[maps]] / 255.0f;
 			surf->cached_light[maps] = scale;	// 8.8 fraction
-			for (i=0 ; i<size ; i++)
-				blocklights[i] += lightmap[i] * scale;
+			for (i = 0; i < size; i++) {
+				float normalizedLight = lightmap[i] / 255.0f; // Normalize to [0, 1]
+				float correctedLight = pow(normalizedLight, 0.75f); // Apply gamma correction with gamma = 0.5
+
+				blocklights[i] += correctedLight * scale; // Apply corrected and scaled light
+			}
 			lightmap += size;	// skip to next lightmap
 		}
 
@@ -193,7 +197,7 @@ store:
 			for (j=0 ; j<smax ; j++)
 			{
 				t = *bl++;
-				t >>= 7;
+				t = t * 255.0f;
 				if (t > 255)
 					t = 255;
 				dest[3] = 255-t;
@@ -210,7 +214,7 @@ store:
 			for (j=0 ; j<smax ; j++)
 			{
 				t = *bl++;
-				t >>= 7;
+				t = t * 256.0f;
 				if (t > 255)
 					t = 255;
 				dest[j] = 255-t;

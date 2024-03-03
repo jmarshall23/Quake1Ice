@@ -276,10 +276,11 @@ R_ParticleExplosion
 */
 void R_ParticleExplosion (const vec3_t & org)
 {
-	int			i, j;
-	particle_t	*p;
-	
-	for (i=0 ; i<1024 ; i++)
+	int i, j;
+	particle_t* p;
+
+	// Increase the number of particles generated for a denser explosion
+	for (i = 0; i < 2048; i++) // Increased from 1024 to 2048
 	{
 		if (!free_particles)
 			return;
@@ -288,25 +289,43 @@ void R_ParticleExplosion (const vec3_t & org)
 		p->next = active_particles;
 		active_particles = p;
 
-		p->die = cl.time + 5;
-		p->color = ramp1[0];
-		p->ramp = rand()&3;
-		if (i & 1)
+		// Adjust die time for more variation in particle lifespan
+		p->die = cl.time + (3 + (rand() % 5)); // Now varies from 3 to 7
+
+		// Introduce more color variations
+		p->color = ramp1[rand() % 5]; // Assuming ramp1 has at least 5 different colors
+
+		// Introduce a random size multiplier, affecting how large each particle appears
+		p->size = 1.0f + (float)(rand() % 100) / 100.0f; // Size varies from 1.0 to 2.0
+
+		// More variation in the ramp to affect particle appearance over time
+		p->ramp = rand() % 5; // Increased variability in appearance
+
+		if (i % 3 == 0) // Change condition to create three types of particles
 		{
 			p->type = pt_explode;
-			for (j=0 ; j<3 ; j++)
+			for (j = 0; j < 3; j++)
 			{
-				p->org[j] = org[j] + ((rand()%32)-16);
-				p->vel[j] = (rand()%512)-256;
+				p->org[j] = org[j] + ((rand() % 64) - 32); // Increased spread
+				p->vel[j] = (rand() % 1024) - 512; // Increased velocity range
 			}
 		}
-		else
+		else if (i % 3 == 1)
 		{
 			p->type = pt_explode2;
-			for (j=0 ; j<3 ; j++)
+			for (j = 0; j < 3; j++)
 			{
-				p->org[j] = org[j] + ((rand()%32)-16);
-				p->vel[j] = (rand()%512)-256;
+				p->org[j] = org[j] + ((rand() % 48) - 24); // Moderately increased spread
+				p->vel[j] = (rand() % 768) - 384; // Moderately increased velocity range
+			}
+		}
+		else // Adding a new particle type for additional variety
+		{
+			p->type = pt_explode3; // Assuming pt_explode3 is a new particle type defined elsewhere
+			for (j = 0; j < 3; j++)
+			{
+				p->org[j] = org[j] + ((rand() % 32) - 16); // Original spread
+				p->vel[j] = (rand() % 512) - 256; // Original velocity range
 			}
 		}
 	}
@@ -399,11 +418,15 @@ R_RunParticleEffect
 */
 void R_RunParticleEffect (const vec3_t & org, const vec3_t & dir, int color, int count)
 {
-	int			i, j;
-	particle_t	*p;
-	
-	for (i=0 ; i<count ; i++)
-	{
+	int i, j;
+	particle_t* p;
+
+	// Blood
+	if (color == 73) {
+		count = 35 + (rand() % 75); // This will set count to a random number between 100 and 200
+	}
+
+	for (i = 0; i < count; i++) {
 		if (!free_particles)
 			return;
 		p = free_particles;
@@ -411,39 +434,55 @@ void R_RunParticleEffect (const vec3_t & org, const vec3_t & dir, int color, int
 		p->next = active_particles;
 		active_particles = p;
 
-		if (count == 1024)
-		{	// rocket explosion
-			p->die = cl.time + 5;
-			p->color = ramp1[0];
-			p->ramp = rand()&3;
-			if (i & 1)
-			{
-				p->type = pt_explode;
-				for (j=0 ; j<3 ; j++)
-				{
-					p->org[j] = org[j] + ((rand()%32)-16);
-					p->vel[j] = (rand()%512)-256;
-				}
+		// Adjust the die time and color for more subtle effects
+		p->die = cl.time + 0.2 + (rand() % 50) / 100.0; // Lasts between 0.2 to 0.7 seconds
+		p->color = (color & ~7) + (rand() & 7); // Slight variation in color
+		p->ramp = (rand() & 3) + 2;
+
+		// Blood
+		if (color == 73) { 
+			p->die = cl.time + 3 + (rand() % 201) / 100.0; // Lasts between 3 to 5 seconds
+			p->color = color; // Use the exact color for blood without variation
+			p->type = pt_blood;
+			// Calculate a normalized inverse direction vector
+			vec3_t inverseDir;
+			for (j = 0; j < 3; j++) {
+				inverseDir[j] = -dir[j];
 			}
-			else
-			{
-				p->type = pt_explode2;
-				for (j=0 ; j<3 ; j++)
-				{
-					p->org[j] = org[j] + ((rand()%32)-16);
-					p->vel[j] = (rand()%512)-256;
-				}
+			VectorNormalize(inverseDir); // Assuming there's a function to normalize the vector
+
+			for (j = 0; j < 3; j++) {
+				// Adjust origin for concentrated offset as before
+				p->org[j] = org[j] + ((rand() & 15) - 8);
+
+				// Significantly increase the inverse direction velocity and randomness for a violent effect
+				float angleSpread = 0.3; // Increase the spread of the cone for more violence
+				float baseVelocity = 120; // Increase base velocity for faster movement
+				float randomVelocityComponent = (rand() % 400 - 200) * angleSpread; // Increase randomness
+				p->vel[j] = inverseDir[j] * baseVelocity + randomVelocityComponent;
 			}
 		}
-		else
-		{
-			p->die = cl.time + 0.1*(rand()%5);
-			p->color = (color&~7) + (rand()&7);
-			p->type = pt_slowgrav;
-			for (j=0 ; j<3 ; j++)
-			{
-				p->org[j] = org[j] + ((rand()&15)-8);
-				p->vel[j] = dir[j]*15;// + (rand()%300)-150;
+		// Differentiate between high-impact (explosion) and low-impact (bullet hit) effects
+		else if (count > 100) { // Assume higher counts correspond to larger explosions
+			p->type = (i % 2 == 0) ? pt_explode : pt_explode2;
+			for (j = 0; j < 3; j++) {
+				p->org[j] = org[j] + ((rand() % 64) - 32); // Increased randomness in origin
+				p->vel[j] = (rand() % 1024) - 512; // Increased velocity for a more dynamic effect
+			}
+		}
+		else { // Smaller counts for bullet hits
+			p->type = pt_smoke;
+			for (j = 0; j < 3; j++) {
+				p->org[j] = org[j] + ((rand() & 7) - 4); // Smaller, more concentrated origin offset
+				p->vel[j] = dir[j] * 20 + ((rand() % 100) - 50); // Directional velocity with slight randomness
+			}
+			p->vel[2] += 25; // Additional upward velocity for smoke to rise
+		}
+
+		// For smoke effects, gradually decrease velocity to simulate air resistance
+		if (p->type == pt_smoke) {
+			for (j = 0; j < 3; j++) {
+				p->vel[j] *= 0.9; // Apply a damping effect to simulate air resistance
 			}
 		}
 	}
@@ -710,13 +749,34 @@ void R_DrawParticles (void)
 		}
 
 #ifdef GLQUAKE
-		// hack a scale up to keep particles from disapearing
-		scale = (p->org[0] - r_origin[0])*vpn[0] + (p->org[1] - r_origin[1])*vpn[1]
-			+ (p->org[2] - r_origin[2])*vpn[2];
-		if (scale < 20)
-			scale = 1;
-		else
-			scale = 1 + scale * 0.004;
+		// Calculate the distance of the particle from the viewpoint
+		float distance = (p->org[0] - r_origin[0]) * vpn[0] +
+			(p->org[1] - r_origin[1]) * vpn[1] +
+			(p->org[2] - r_origin[2]) * vpn[2];
+
+		// Apply a base scale factor based on the particle size if specified
+		if (p->size > 0) {
+			distance *= p->size;
+		}
+
+		// Adjust the scale dynamically based on the calculated distance
+		if (distance < 20) {
+			// For very close particles, set a minimum scale to ensure visibility
+			scale = 1.0f;
+		}
+		else {
+			// Apply a scaling factor that increases with distance but at a rate that ensures particles remain visible
+			// Adjust the 0.004 factor if needed to fine-tune visibility at various distances
+			scale = 1 + (distance - 20) * 0.004;
+		}
+
+		// Ensure scale does not become too large, potentially causing particles to appear too big
+		// You can adjust the max scale value as needed
+		const float maxScale = 2.0f;
+		if (scale > maxScale) {
+			scale = maxScale;
+		}
+
 		glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
 		glTexCoord2f (0,0);
 		glVertex3fv (p->org);
@@ -766,6 +826,33 @@ void R_DrawParticles (void)
 			p->vel[2] -= grav;
 			break;
 
+		case pt_explode3: // New case with unique behavior
+			p->ramp += (time2 + time3) / 2; // Average of time2 and time3 for ramp increase
+			if (p->ramp >= 6) // Slightly shorter life span
+				p->die = -1;
+			else
+				p->color = ramp3[(int)p->ramp % 5]; // Assume ramp3 is a new color array, cycling through 5 colors
+			for (i = 0; i < 2; i++) // Only modify x and y velocity
+				p->vel[i] *= 1.1; // Slightly increase horizontal velocity
+			p->vel[2] -= grav * 0.5; // Reduced gravitational effect
+			break;
+
+		case pt_smoke:
+			p->ramp += time1; // Gradual increase to simulate smoke dispersal
+			if (p->ramp >= 10) // Allowing for a longer lifespan
+				p->die = -1;
+			//else
+			//	p->color = ramp1[(int)p->ramp % 6]; // Assuming ramp4 has smoke-like colors, cycling through 6 shades
+
+			// Smoke particles move slower than explosion particles, simulate this
+			for (i = 0; i < 3; i++)
+				p->vel[i] *= 0.8; // Apply a damping effect to slow down over time
+
+			// Smoke rises, so we adjust the vertical velocity differently
+			p->vel[2] += 10 - (grav * 0.2); // Smoke rises initially then slowly settles under gravity
+
+			break;
+
 		case pt_blob:
 			for (i=0 ; i<3 ; i++)
 				p->vel[i] += p->vel[i]*dvel;
@@ -776,6 +863,18 @@ void R_DrawParticles (void)
 			for (i=0 ; i<2 ; i++)
 				p->vel[i] -= p->vel[i]*dvel;
 			p->vel[2] -= grav;
+			break;
+
+		case pt_blood: // Handling blood particle behavior
+			p->ramp += time1; // Use a different time variable for gradual changes
+			if (p->ramp >= 5) // Shorter lifespan for blood particles
+				p->die = -1;
+
+			for (i = 0; i < 3; i++) {
+				float randomFactor = 0.8 + ((rand() % 401) / 1000.0); // Generates a random value between 0.8 and 1.2
+				p->vel[i] *= randomFactor; // Apply a random damping effect to slow down or slightly speed up over time
+			}
+
 			break;
 
 		case pt_grav:

@@ -899,7 +899,8 @@ void R_SetupGL (void)
 	}
 
 	glViewport (glx + x, gly + y2, w, h);
-    screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
+	float stretchFactor = 0.86f;
+	screenaspect = ((float)r_refdef.vrect.width * stretchFactor) / r_refdef.vrect.height;
 //	yfov = 2*atan((float)r_refdef.vrect.height/r_refdef.vrect.width)*180/M_PI;
     MYgluPerspective (r_refdef.fov_y,  screenaspect,  4,  4096);
 
