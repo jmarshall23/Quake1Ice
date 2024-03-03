@@ -52,6 +52,7 @@ cvar_t	saved4 = {"saved4", "0", true};
 
 #define	MAX_FIELD_LEN	64
 #define GEFV_CACHESIZE	2
+#define PROGHEADER_CRC 5927
 
 typedef struct {
 	ddef_t	*pcache;
@@ -92,6 +93,7 @@ edict_t *ED_Alloc (void)
 	for ( i=svs.maxclients+1 ; i<sv.num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
+		e->entnum = i;
 		// the first couple seconds of server time can involve a lot of
 		// freeing and allocating, so relax the replacement policy
 		if (e->free && ( e->freetime < 2 || sv.time - e->freetime > 0.5 ) )
@@ -106,6 +108,7 @@ edict_t *ED_Alloc (void)
 		
 	sv.num_edicts++;
 	e = EDICT_NUM(i);
+	e->entnum = i;
 	ED_ClearEdict (e);
 
 	return e;

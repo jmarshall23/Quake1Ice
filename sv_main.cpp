@@ -77,7 +77,7 @@ SV_StartParticle
 Make sure the event gets sent to all clients
 ==================
 */
-void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
+void SV_StartParticle (const vec3_t & org, const vec3_t & dir, int color, int count)
 {
 	int		i, v;
 
@@ -364,7 +364,7 @@ crosses a waterline.
 int		fatbytes;
 byte	fatpvs[MAX_MAP_LEAFS/8];
 
-void SV_AddToFatPVS (vec3_t org, mnode_t *node)
+void SV_AddToFatPVS (const vec3_t & org, mnode_t *node)
 {
 	int		i;
 	byte	*pvs;
@@ -407,7 +407,7 @@ Calculates a PVS that is the inclusive or of all leafs within 8 pixels of the
 given point.
 =============
 */
-byte *SV_FatPVS (vec3_t org)
+byte *SV_FatPVS (const vec3_t & org)
 {
 	fatbytes = (sv.worldmodel->numleafs+31)>>3;
 	Q_memset (fatpvs, 0, fatbytes);

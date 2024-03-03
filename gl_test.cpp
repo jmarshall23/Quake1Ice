@@ -45,7 +45,7 @@ void Test_Init (void)
 
 
 plane_t	junk;
-plane_t	*HitPlane (vec3_t start, vec3_t end)
+plane_t	*HitPlane (const vec3_t & start, const vec3_t & end)
 {
 	trace_t		trace;
 
@@ -61,7 +61,7 @@ plane_t	*HitPlane (vec3_t start, vec3_t end)
 	return &junk;
 }
 
-void Test_Spawn (vec3_t origin)
+void Test_Spawn (const vec3_t & origin)
 {
 	int		i;
 	puff_t	*p;

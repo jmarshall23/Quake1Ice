@@ -105,7 +105,7 @@ makevectors(vector)
 */
 void PF_makevectors (void)
 {
-	AngleVectors (G_VECTOR(OFS_PARM0), pr_global_struct->v_forward, pr_global_struct->v_right, pr_global_struct->v_up);
+	AngleVectors (vec3_t(G_VECTOR(OFS_PARM0)), pr_global_struct->v_forward, pr_global_struct->v_right, pr_global_struct->v_up);
 }
 
 /*
@@ -493,7 +493,7 @@ void PF_particle (void)
 	dir = G_VECTOR(OFS_PARM1);
 	color = G_FLOAT(OFS_PARM2);
 	count = G_FLOAT(OFS_PARM3);
-	SV_StartParticle (org, dir, color, count);
+	SV_StartParticle (vec3_t(org), vec3_t(dir), color, count);
 }
 
 
@@ -618,7 +618,7 @@ void PF_traceline (void)
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
 
-	trace = SV_Move (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
+	trace = SV_Move (vec3_t(v1), vec3_origin, vec3_origin, vec3_t(v2), nomonsters, ent);
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;
@@ -1288,7 +1288,7 @@ void PF_pointcontents (void)
 	
 	v = G_VECTOR(OFS_PARM0);
 
-	G_FLOAT(OFS_RETURN) = SV_PointContents (v);	
+	G_FLOAT(OFS_RETURN) = SV_PointContents (vec3_t(v));
 }
 
 /*

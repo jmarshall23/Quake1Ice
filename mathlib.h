@@ -19,9 +19,103 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // mathlib.h
 
+#include <stdexcept> // For std::out_of_range
+
 typedef float vec_t;
-typedef vec_t vec3_t[3];
-typedef vec_t vec5_t[5];
+
+class vec3_t {
+public:
+	float x, y, z;
+
+	// Default constructor
+	vec3_t() : x(0), y(0), z(0) {}
+
+	vec3_t(float xValue, float yValue, float zValue) : x(xValue), y(yValue), z(zValue) {}
+
+	// Constructor from float array
+	explicit vec3_t(const float* ptr) : x(ptr[0]), y(ptr[1]), z(ptr[2]) {}
+
+	// Array accessor
+	float& operator[](int index) {
+		switch (index) {
+		case 0: return x;
+		case 1: return y;
+		case 2: return z;
+		default: throw std::out_of_range("Index out of range");
+		}
+	}
+
+	float* Ptr() const {
+		return (float *) &x;
+	}
+
+	// Vector addition
+	vec3_t operator+(const vec3_t & other) const {
+		return vec3_t(x + other.x, y + other.y, z + other.z);
+	}
+
+	// Scalar addition
+	vec3_t operator+(float scalar) const {
+		return vec3_t(x + scalar, y + scalar, z + scalar );
+	}
+
+	// Vector multiplication
+	vec3_t operator*(const vec3_t & other) const {
+		return vec3_t(x * other.x, y * other.y, z * other.z );
+	}
+
+	// Scalar multiplication
+	vec3_t operator*(float scalar) const {
+		return vec3_t(x * scalar, y * scalar, z * scalar );
+	}
+
+	// Conversion operator to float*
+	operator float* () {
+		return &x; // Return address of x, which is the first element
+	}
+
+	// If const correctness is a concern, provide a const version as well
+	operator const float* () const {
+		return &x; // Return address of x, but for const contexts
+	}
+};
+
+class vec5_t {
+public:
+	float x, y, z, v, w;
+
+	// Array accessor
+	float& operator[](int index) {
+		switch (index) {
+		case 0: return x;
+		case 1: return y;
+		case 2: return z;
+		case 3: return v;
+		case 4: return w;
+		default: throw std::out_of_range("Index out of range");
+		}
+	}
+
+	// Vector addition
+	vec5_t operator+(const vec5_t& other) const {
+		return { x + other.x, y + other.y, z + other.z, v + other.v, w + other.w };
+	}
+
+	// Scalar addition
+	vec5_t operator+(float scalar) const {
+		return { x + scalar, y + scalar, z + scalar, v + scalar, w + scalar };
+	}
+
+	// Vector multiplication
+	vec5_t operator*(const vec5_t& other) const {
+		return { x * other.x, y * other.y, z * other.z, v * other.v, w * other.w };
+	}
+
+	// Scalar multiplication
+	vec5_t operator*(float scalar) const {
+		return { x * scalar, y * scalar, z * scalar, v * scalar, w * scalar };
+	}
+};
 
 typedef	int	fixed4_t;
 typedef	int	fixed8_t;
@@ -43,19 +137,19 @@ extern	int nanmask;
 #define VectorAdd(a,b,c) {c[0]=a[0]+b[0];c[1]=a[1]+b[1];c[2]=a[2]+b[2];}
 #define VectorCopy(a,b) {b[0]=a[0];b[1]=a[1];b[2]=a[2];}
 
-void VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc);
+void VectorMA(const vec3_t& veca, float scale, const vec3_t& vecb, vec3_t& vecc);
 
-vec_t _DotProduct (vec3_t v1, vec3_t v2);
-void _VectorSubtract (vec3_t veca, vec3_t vecb, vec3_t out);
-void _VectorAdd (vec3_t veca, vec3_t vecb, vec3_t out);
-void _VectorCopy (vec3_t in, vec3_t out);
+vec_t _DotProduct (const vec3_t & v1, const vec3_t & v2);
+void _VectorSubtract(const vec3_t& veca, const vec3_t& vecb, vec3_t& out);
+void _VectorAdd (const vec3_t & veca, const vec3_t & vecb, vec3_t & out);
+void _VectorCopy (const vec3_t & in, vec3_t &out);
 
-int VectorCompare (vec3_t v1, vec3_t v2);
-vec_t Length (vec3_t v);
-void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
-float VectorNormalize (vec3_t v);		// returns vector length
-void VectorInverse (vec3_t v);
-void VectorScale (vec3_t in, vec_t scale, vec3_t out);
+int VectorCompare (const vec3_t & v1, const vec3_t & v2);
+vec_t Length (float *v);
+void CrossProduct (const vec3_t & v1, const vec3_t & v2, vec3_t & cross);
+float VectorNormalize (vec3_t &v);		// returns vector length
+void VectorInverse (vec3_t &v);
+void VectorScale (const vec3_t & in, vec_t scale, vec3_t & out);
 int Q_log2(int val);
 
 void R_ConcatRotations (float in1[3][3], float in2[3][3], float out[3][3]);
@@ -66,11 +160,11 @@ void FloorDivMod (double numer, double denom, int *quotient,
 fixed16_t Invert24To16(fixed16_t val);
 int GreatestCommonDivisor (int i1, int i2);
 
-void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *plane);
+void AngleVectors(const vec3_t & angles, vec3_t & forward, vec3_t & right, vec3_t & up);
+int BoxOnPlaneSide (const vec3_t & emins, const vec3_t & emaxs, struct mplane_s *plane);
 float	anglemod(float a);
 
-void RotatePointAroundVector(vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);
+void RotatePointAroundVector(vec3_t& dst, const vec3_t & dir, const vec3_t & point, float degrees);
 
 #define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\
 	(((p)->type < 3)?						\

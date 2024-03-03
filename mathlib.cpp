@@ -31,7 +31,7 @@ int nanmask = 255<<23;
 
 #define DEG2RAD( a ) ( a * M_PI ) / 180.0F
 
-void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal )
+void ProjectPointOnPlane( vec3_t &dst, const vec3_t & p, const vec3_t & normal )
 {
 	float d;
 	vec3_t n;
@@ -53,7 +53,7 @@ void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal )
 /*
 ** assumes "src" is normalized
 */
-void PerpendicularVector( vec3_t dst, const vec3_t src )
+void PerpendicularVector( vec3_t &dst, const vec3_t & src )
 {
 	int	pos;
 	int i;
@@ -85,7 +85,7 @@ void PerpendicularVector( vec3_t dst, const vec3_t src )
 	VectorNormalize( dst );
 }
 
-void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees )
+void RotatePointAroundVector( vec3_t &dst, const vec3_t & dir, const vec3_t & point, float degrees )
 {
 	float	m[3][3];
 	float	im[3][3];
@@ -175,7 +175,7 @@ BoxOnPlaneSide
 Returns 1, 2, or 1 + 2
 ==================
 */
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, mplane_t *p)
+int BoxOnPlaneSide (const vec3_t & emins, const vec3_t & emaxs, mplane_t *p)
 {
 	float	dist1, dist2;
 	int		sides;
@@ -276,7 +276,7 @@ if (sides == 0)
 }
 
 
-void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
+void AngleVectors(const vec3_t& angles, vec3_t& forward, vec3_t& right, vec3_t& up)
 {
 	float		angle;
 	float		sr, sp, sy, cr, cp, cy;
@@ -302,7 +302,7 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 	up[2] = cr*cp;
 }
 
-int VectorCompare (vec3_t v1, vec3_t v2)
+int VectorCompare (const vec3_t & v1, const vec3_t & v2)
 {
 	int		i;
 	
@@ -313,7 +313,7 @@ int VectorCompare (vec3_t v1, vec3_t v2)
 	return 1;
 }
 
-void VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
+void VectorMA (const vec3_t &veca, float scale, const vec3_t &vecb, vec3_t &vecc)
 {
 	vecc[0] = veca[0] + scale*vecb[0];
 	vecc[1] = veca[1] + scale*vecb[1];
@@ -321,33 +321,33 @@ void VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
 }
 
 
-vec_t _DotProduct (vec3_t v1, vec3_t v2)
+vec_t _DotProduct (const vec3_t & v1, const vec3_t & v2)
 {
 	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
-void _VectorSubtract (vec3_t veca, vec3_t vecb, vec3_t out)
+void _VectorSubtract (const vec3_t & veca, const vec3_t & vecb, vec3_t &out)
 {
 	out[0] = veca[0]-vecb[0];
 	out[1] = veca[1]-vecb[1];
 	out[2] = veca[2]-vecb[2];
 }
 
-void _VectorAdd (vec3_t veca, vec3_t vecb, vec3_t out)
+void _VectorAdd (const vec3_t & veca, const vec3_t & vecb, vec3_t &out)
 {
 	out[0] = veca[0]+vecb[0];
 	out[1] = veca[1]+vecb[1];
 	out[2] = veca[2]+vecb[2];
 }
 
-void _VectorCopy (vec3_t in, vec3_t out)
+void _VectorCopy (const vec3_t & in, vec3_t &out)
 {
 	out[0] = in[0];
 	out[1] = in[1];
 	out[2] = in[2];
 }
 
-void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
+void CrossProduct (const vec3_t & v1, const vec3_t & v2, vec3_t &cross)
 {
 	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
 	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
@@ -356,7 +356,7 @@ void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
 
 double sqrt(double x);
 
-vec_t Length(vec3_t v)
+vec_t Length(float *v)
 {
 	int		i;
 	float	length;
@@ -369,7 +369,7 @@ vec_t Length(vec3_t v)
 	return length;
 }
 
-float VectorNormalize (vec3_t v)
+float VectorNormalize (vec3_t &v)
 {
 	float	length, ilength;
 
@@ -388,14 +388,14 @@ float VectorNormalize (vec3_t v)
 
 }
 
-void VectorInverse (vec3_t v)
+void VectorInverse (vec3_t &v)
 {
 	v[0] = -v[0];
 	v[1] = -v[1];
 	v[2] = -v[2];
 }
 
-void VectorScale (vec3_t in, vec_t scale, vec3_t out)
+void VectorScale (const vec3_t & in, vec_t scale, vec3_t &out)
 {
 	out[0] = in[0]*scale;
 	out[1] = in[1]*scale;

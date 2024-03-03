@@ -42,7 +42,7 @@ typedef struct
 } moveclip_t;
 
 
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p);
+int SV_HullPointContents (hull_t *hull, int num, const vec3_t & p);
 
 /*
 ===============================================================================
@@ -102,7 +102,7 @@ To keep everything totally uniform, bounding boxes are turned into small
 BSP trees instead of being compared directly.
 ===================
 */
-hull_t	*SV_HullForBox (vec3_t mins, vec3_t maxs)
+hull_t	*SV_HullForBox (const vec3_t & mins, const vec3_t & maxs)
 {
 	box_planes[0].dist = maxs[0];
 	box_planes[1].dist = mins[0];
@@ -126,7 +126,7 @@ Offset is filled in to contain the adjustment that must be added to the
 testing object's origin to get a point to use with the returned hull.
 ================
 */
-hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
+hull_t *SV_HullForEntity (edict_t *ent, const vec3_t & mins, const vec3_t & maxs, vec3_t & offset)
 {
 	model_t		*model;
 	vec3_t		size;
@@ -199,7 +199,7 @@ SV_CreateAreaNode
 
 ===============
 */
-areanode_t *SV_CreateAreaNode (int depth, vec3_t mins, vec3_t maxs)
+areanode_t *SV_CreateAreaNode (int depth, const vec3_t & mins, const vec3_t & maxs)
 {
 	areanode_t	*anode;
 	vec3_t		size;
@@ -488,7 +488,7 @@ SV_HullPointContents
 
 ==================
 */
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
+int SV_HullPointContents (hull_t *hull, int num, const vec3_t & p)
 {
 	float		d;
 	dclipnode_t	*node;
@@ -524,7 +524,7 @@ SV_PointContents
 
 ==================
 */
-int SV_PointContents (vec3_t p)
+int SV_PointContents (const vec3_t & p)
 {
 	int		cont;
 
@@ -534,7 +534,7 @@ int SV_PointContents (vec3_t p)
 	return cont;
 }
 
-int SV_TruePointContents (vec3_t p)
+int SV_TruePointContents (const vec3_t & p)
 {
 	return SV_HullPointContents (&sv.worldmodel->hulls[0], 0, p);
 }
@@ -578,7 +578,7 @@ SV_RecursiveHullCheck
 
 ==================
 */
-qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace)
+qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, const vec3_t & p1, const vec3_t & p2, trace_t *trace)
 {
 	dclipnode_t	*node;
 	mplane_t	*plane;
@@ -719,7 +719,7 @@ Handles selection or creation of a clipping hull, and offseting (and
 eventually rotation) of the end points
 ==================
 */
-trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
+trace_t SV_ClipMoveToEntity (edict_t *ent, const vec3_t & start, const vec3_t & mins, const vec3_t & maxs, const vec3_t & end)
 {
 	trace_t		trace;
 	vec3_t		offset;
@@ -855,9 +855,9 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 		}
 
 		if ((int)touch->v.flags & FL_MONSTER)
-			trace = SV_ClipMoveToEntity (touch, clip->start, clip->mins2, clip->maxs2, clip->end);
+			trace = SV_ClipMoveToEntity (touch, vec3_t(clip->start), clip->mins2, clip->maxs2, vec3_t(clip->end));
 		else
-			trace = SV_ClipMoveToEntity (touch, clip->start, clip->mins, clip->maxs, clip->end);
+			trace = SV_ClipMoveToEntity (touch, vec3_t(clip->start), vec3_t(clip->mins), vec3_t(clip->maxs), vec3_t(clip->end));
 		if (trace.allsolid || trace.startsolid ||
 		trace.fraction < clip->trace.fraction)
 		{
@@ -890,7 +890,7 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 SV_MoveBounds
 ==================
 */
-void SV_MoveBounds (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t boxmins, vec3_t boxmaxs)
+void SV_MoveBounds (const vec3_t & start, const vec3_t & mins, const vec3_t & maxs, const vec3_t & end, vec3_t & boxmins, vec3_t & boxmaxs)
 {
 #if 0
 // debug to test against everything
@@ -920,7 +920,7 @@ boxmaxs[0] = boxmaxs[1] = boxmaxs[2] = 9999;
 SV_Move
 ==================
 */
-trace_t SV_Move (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict)
+trace_t SV_Move (const vec3_t start, const vec3_t & mins, const vec3_t & maxs, const vec3_t & end, int type, edict_t *passedict)
 {
 	moveclip_t	clip;
 	int			i;
@@ -930,10 +930,10 @@ trace_t SV_Move (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, e
 // clip to world
 	clip.trace = SV_ClipMoveToEntity ( sv.edicts, start, mins, maxs, end );
 
-	clip.start = start;
-	clip.end = end;
-	clip.mins = mins;
-	clip.maxs = maxs;
+	clip.start = start.Ptr();
+	clip.end = end.Ptr();
+	clip.mins = mins.Ptr();
+	clip.maxs = maxs.Ptr();
 	clip.type = type;
 	clip.passedict = passedict;
 

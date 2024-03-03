@@ -340,4 +340,4 @@ void Chase_Reset (void);
 void Chase_Update (void);
 
 LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-qboolean SV_RecursiveHullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t* trace);
+qboolean SV_RecursiveHullCheck(hull_t* hull, int num, float p1f, float p2f, const vec3_t & p1, const vec3_t & p2, trace_t* trace);

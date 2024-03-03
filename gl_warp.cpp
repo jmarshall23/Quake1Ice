@@ -35,7 +35,7 @@ void EmitWaterPolys(msurface_t* fa);
 
 extern cvar_t gl_subdivide_size;
 
-void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
+void BoundPoly (int numverts, float *verts, vec3_t & mins, vec3_t & maxs)
 {
 	int		i, j;
 	float	*v;
@@ -716,7 +716,7 @@ int	vec_to_st[6][3] =
 
 float	skymins[2][6], skymaxs[2][6];
 
-void DrawSkyPolygon (int nump, vec3_t vecs)
+void DrawSkyPolygon (int nump, const vec3_t & vecs)
 {
 	int		i,j;
 	vec3_t	v, av;
@@ -798,7 +798,7 @@ return;
 }
 
 #define	MAX_CLIP_VERTS	64
-void ClipSkyPolygon (int nump, vec3_t vecs, int stage)
+void ClipSkyPolygon (int nump, const vec3_t & vecs, int stage)
 {
 	float	*norm;
 	float	*v;

@@ -108,7 +108,7 @@ R_CullBox
 Returns true if the box is completely outside the frustom
 =================
 */
-qboolean R_CullBox (vec3_t mins, vec3_t maxs)
+qboolean R_CullBox (const vec3_t & mins, const vec3_t & maxs)
 {
 	int		i;
 
@@ -198,7 +198,7 @@ void R_DrawSpriteModel (entity_t *e)
 {
 	vec3_t	point;
 	mspriteframe_t	*frame;
-	float		*up, *right;
+	vec3_t		*up, *right;
 	vec3_t		v_forward, v_right, v_up;
 	msprite_t		*psprite;
 
@@ -210,13 +210,13 @@ void R_DrawSpriteModel (entity_t *e)
 	if (psprite->type == SPR_ORIENTED)
 	{	// bullet marks on walls
 		AngleVectors (currententity->angles, v_forward, v_right, v_up);
-		up = v_up;
-		right = v_right;
+		up = &v_up;
+		right = &v_right;
 	}
 	else
 	{	// normal sprite
-		up = vup;
-		right = vright;
+		up = &vup;
+		right = &vright;
 	}
 
 	glColor3f (1,1,1);
@@ -229,23 +229,23 @@ void R_DrawSpriteModel (entity_t *e)
 	glBegin (GL_QUADS);
 
 	glTexCoord2f (0, 1);
-	VectorMA (e->origin, frame->down, up, point);
-	VectorMA (point, frame->left, right, point);
+	VectorMA (e->origin, frame->down, *up, point);
+	VectorMA (point, frame->left, *right, point);
 	glVertex3fv (point);
 
 	glTexCoord2f (0, 0);
-	VectorMA (e->origin, frame->up, up, point);
-	VectorMA (point, frame->left, right, point);
+	VectorMA (e->origin, frame->up, *up, point);
+	VectorMA (point, frame->left, *right, point);
 	glVertex3fv (point);
 
 	glTexCoord2f (1, 0);
-	VectorMA (e->origin, frame->up, up, point);
-	VectorMA (point, frame->right, right, point);
+	VectorMA (e->origin, frame->up, *up, point);
+	VectorMA (point, frame->right, *right, point);
 	glVertex3fv (point);
 
 	glTexCoord2f (1, 1);
-	VectorMA (e->origin, frame->down, up, point);
-	VectorMA (point, frame->right, right, point);
+	VectorMA (e->origin, frame->down, *up, point);
+	VectorMA (point, frame->right, *right, point);
 	glVertex3fv (point);
 	
 	glEnd ();

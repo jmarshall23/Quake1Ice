@@ -81,7 +81,7 @@ void *Mod_Extradata (model_t *mod)
 Mod_PointInLeaf
 ===============
 */
-mleaf_t *Mod_PointInLeaf (vec3_t p, model_t *model)
+mleaf_t *Mod_PointInLeaf (const vec3_t & p, model_t *model)
 {
 	mnode_t		*node;
 	float		d;
@@ -106,6 +106,30 @@ mleaf_t *Mod_PointInLeaf (vec3_t p, model_t *model)
 	return NULL;	// never reached
 }
 
+mleaf_t* Mod_PointInLeaf(float *p, model_t* model)
+{
+	mnode_t* node;
+	float		d;
+	mplane_t* plane;
+
+	if (!model || !model->nodes)
+		Sys_Error("Mod_PointInLeaf: bad model");
+
+	node = model->nodes;
+	while (1)
+	{
+		if (node->contents < 0)
+			return (mleaf_t*)node;
+		plane = node->plane;
+		d = DotProduct(p, plane->normal) - plane->dist;
+		if (d > 0)
+			node = node->children[0];
+		else
+			node = node->children[1];
+	}
+
+	return NULL;	// never reached
+}
 
 /*
 ===================
@@ -1129,7 +1153,7 @@ void Mod_LoadPlanes (lump_t *l)
 RadiusFromBounds
 =================
 */
-float RadiusFromBounds (vec3_t mins, vec3_t maxs)
+float RadiusFromBounds (const vec3_t & mins, const vec3_t & maxs)
 {
 	int		i;
 	vec3_t	corner;

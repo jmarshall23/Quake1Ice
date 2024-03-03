@@ -1199,7 +1199,8 @@ void R_RecursiveWorldNode (mnode_t *node)
 
 	if (node->visframe != r_visframecount)
 		return;
-	if (R_CullBox (node->minmaxs, node->minmaxs+3))
+	if (R_CullBox (vec3_t(node->minmaxs[0], node->minmaxs[1], node->minmaxs[2]), 
+				   vec3_t(node->minmaxs[3], node->minmaxs[4], node->minmaxs[5])))
 		return;
 	
 // if a leaf node, draw stuff

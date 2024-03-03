@@ -167,7 +167,7 @@ SV_Accelerate
 cvar_t	sv_maxspeed = {"sv_maxspeed", "320", false, true};
 cvar_t	sv_accelerate = {"sv_accelerate", "10"};
 #if 0
-void SV_Accelerate (vec3_t wishvel)
+void SV_Accelerate (const vec3_t & wishvel)
 {
 	int			i;
 	float		addspeed, accelspeed;
@@ -204,7 +204,7 @@ void SV_Accelerate (void)
 		velocity[i] += accelspeed*wishdir[i];	
 }
 
-void SV_AirAccelerate (vec3_t wishveloc)
+void SV_AirAccelerate (vec3_t &wishveloc)
 {
 	int			i;
 	float		addspeed, wishspd, accelspeed, currentspeed;
@@ -280,7 +280,12 @@ void SV_WaterMove (void)
 		newspeed = speed - host_frametime * speed * sv_friction.value;
 		if (newspeed < 0)
 			newspeed = 0;	
-		VectorScale (velocity, newspeed/speed, velocity);
+
+		vec3_t temp(velocity);
+		VectorScale (vec3_t(velocity), newspeed/speed, temp);
+		velocity[0] = temp.x;
+		velocity[1] = temp.y;
+		velocity[2] = temp.z;
 	}
 	else
 		newspeed = 0;

@@ -250,7 +250,7 @@ extern qboolean gl_mtexable;
 void GL_DisableMultitexture(void);
 void GL_EnableMultitexture(void);
 
-int R_LightPoint(vec3_t p);
+int R_LightPoint(const vec3_t & p);
 void R_DrawBrushModel(entity_t* e);
 void R_AnimateLight(void);
 void V_CalcBlend(void);
@@ -266,7 +266,7 @@ void EmitWaterPolys(msurface_t* fa);
 void EmitSkyPolys(msurface_t* fa);
 void EmitBothSkyLayers(msurface_t* fa);
 void R_DrawSkyChain(msurface_t* s);
-qboolean R_CullBox(vec3_t mins, vec3_t maxs);
+qboolean R_CullBox(const vec3_t & mins, const vec3_t & maxs);
 void R_MarkLights(dlight_t* light, int bit, mnode_t* node);
 void R_RotateForEntity(entity_t* e);
 void R_StoreEfrags(efrag_t** ppefrag);

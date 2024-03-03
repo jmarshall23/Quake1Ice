@@ -233,7 +233,7 @@ LIGHT SAMPLING
 mplane_t		*lightplane;
 vec3_t			lightspot;
 
-int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
+int RecursiveLightPoint (mnode_t *node, const vec3_t & start, const vec3_t & end)
 {
 	int			r;
 	float		front, back, frac;
@@ -332,7 +332,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	return RecursiveLightPoint (node->children[!side], mid, end);
 }
 
-int R_LightPoint (vec3_t p)
+int R_LightPoint (const vec3_t & p)
 {
 	vec3_t		end;
 	int			r;

@@ -274,7 +274,7 @@ R_ParticleExplosion
 
 ===============
 */
-void R_ParticleExplosion (vec3_t org)
+void R_ParticleExplosion (const vec3_t & org)
 {
 	int			i, j;
 	particle_t	*p;
@@ -318,7 +318,7 @@ R_ParticleExplosion2
 
 ===============
 */
-void R_ParticleExplosion2 (vec3_t org, int colorStart, int colorLength)
+void R_ParticleExplosion2 (const vec3_t & org, int colorStart, int colorLength)
 {
 	int			i, j;
 	particle_t	*p;
@@ -352,7 +352,7 @@ R_BlobExplosion
 
 ===============
 */
-void R_BlobExplosion (vec3_t org)
+void R_BlobExplosion (const vec3_t & org)
 {
 	int			i, j;
 	particle_t	*p;
@@ -397,7 +397,7 @@ R_RunParticleEffect
 
 ===============
 */
-void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count)
+void R_RunParticleEffect (const vec3_t & org, const vec3_t & dir, int color, int count)
 {
 	int			i, j;
 	particle_t	*p;
@@ -456,7 +456,7 @@ R_LavaSplash
 
 ===============
 */
-void R_LavaSplash (vec3_t org)
+void R_LavaSplash (const vec3_t & org)
 {
 	int			i, j, k;
 	particle_t	*p;
@@ -498,7 +498,7 @@ R_TeleportSplash
 
 ===============
 */
-void R_TeleportSplash (vec3_t org)
+void R_TeleportSplash (const vec3_t & org)
 {
 	int			i, j, k;
 	particle_t	*p;
@@ -534,7 +534,7 @@ void R_TeleportSplash (vec3_t org)
 			}
 }
 
-void R_RocketTrail (vec3_t start, vec3_t end, int type)
+void R_RocketTrail (vec3_t &start, const vec3_t & end, int type)
 {
 	vec3_t		vec;
 	float		len;

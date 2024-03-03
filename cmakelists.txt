@@ -61,7 +61,7 @@ set(SOURCES
 )
 
 # Add executable target
-add_executable(Quake  WIN32 ${SOURCES} "game/game_main.cpp" "game/game.h")
+add_executable(Quake  WIN32 ${SOURCES} "game/game_main.cpp" "game/game.h" "game/game_api.cpp")
 
 # Add GLQUAKE preprocessor definition
 target_compile_definitions(Quake PRIVATE GLQUAKE)
