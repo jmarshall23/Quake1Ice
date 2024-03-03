@@ -6,7 +6,7 @@
 
 namespace QuakeAPI
 {
-	void SetMinMaxSize(edict_t* e, float* min, float* max, qboolean rotate)
+	void SetMinMaxSize(edict_t* e, const vec3_t& min, const vec3_t& max, qboolean rotate)
 	{
 		float* angles;
 		vec3_t	rmin, rmax;
@@ -91,10 +91,10 @@ namespace QuakeAPI
 		SV_LinkEdict(e, false);
 	}
 
-	//void setsize(edict_t* e, const vec3_t & min, const vec3_t & max)
-	//{
-//		SetMinMaxSize(e, min, max, false);
-	//}
+	void setsize(edict_t* e, const vec3_t & min, const vec3_t & max)
+	{
+		SetMinMaxSize(e, min, max, false);
+	}
 
 	void setmodel(edict_t* e, const char* m)
 	{
