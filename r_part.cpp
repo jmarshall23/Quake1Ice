@@ -622,6 +622,7 @@ void R_RocketTrail(vec3_t& start, const vec3_t& end, int type) {
 		p->vel = vec3_t(0, 0, 0);
 		p->die = cl.time + (type == 0 ? 2.5 : 2);
 		p->growth = 5.0f + ((rand() % 501) / 100.0f); // Random growth between 5.0 and 10.0
+		p->size = 0.5f + ((rand() % 101) / 100.0f); // Random size between 0.5 and 1.5
 
 		float coneSpread = 0.1; // Adjust for wider or narrower cone
 		vec3_t randomDir;
@@ -643,7 +644,7 @@ void R_RocketTrail(vec3_t& start, const vec3_t& end, int type) {
 
 				float coneSpread = 0.3; // Increase for a wider cone effect
 
-				p->ramp = (rand() & 3);
+				p->ramp = (rand() & 3) * 0.5f;
 				p->color = ramp3[(int)p->ramp];
 				p->type = pt_firetrail;
 				p->size = 0.5f + ((rand() % 101) / 100.0f); // Random size between 0.5 and 1.5
@@ -662,7 +663,7 @@ void R_RocketTrail(vec3_t& start, const vec3_t& end, int type) {
 
 				for (j = 0; j < 3; j++) {
 					p->org[j] = start[j] + randomDir[j] * ((rand() % 6) - 3);
-					p->vel[j] = randomDir[j] * 50; // Increase velocity for a more dramatic effect
+					p->vel[j] = randomDir[j] * 25; // Increase velocity for a more dramatic effect
 				}
 			}
 			break;
